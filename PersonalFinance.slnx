@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="finance-ui/finance-ui.njsproj" />
+  <Project Path="FinanceApi/FinanceApi.csproj" />
+</Solution>

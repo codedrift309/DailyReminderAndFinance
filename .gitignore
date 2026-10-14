@@ -1,0 +1,28 @@
+# Visual Studio / IDE
+.vs/
+*.user
+*.suo
+*.sln.docstates
+
+# Build outputs
+bin/
+obj/
+dist/
+dist-ssr/
+
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Database / runtime data
+*.db
+*.db-wal
+*.db-shm
+
+# Temp / logs
+*.log
+UpgradeLog*.htm
+
+# OS
+Thumbs.db
+.DS_Store

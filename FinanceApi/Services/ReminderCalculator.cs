@@ -70,6 +70,6 @@ public static class ReminderCalculator
     // First occurrence after creation
     public static DateTime Initial(Reminder r)
     {
-        return ComputeNext(r, DateTime.Now.AddSeconds(-1));
+        return ComputeNext(r, ReminderClock.Now.AddSeconds(-1));
     }
 }

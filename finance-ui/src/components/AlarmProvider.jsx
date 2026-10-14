@@ -1,6 +1,5 @@
 import React, { createContext, useCallback, useEffect, useRef, useState } from "react";
 import { remindersApi } from "../services/api";
-import { money } from "../utils/format";
 import { BellRing, Check, Clock, X } from "lucide-react";
 
 export const AlarmContext = createContext(null);
@@ -9,37 +8,53 @@ export default function AlarmProvider({ children }) {
   const [alarms, setAlarms] = useState([]);
   const [countdown, setCountdown] = useState(60);
   const audioRef = useRef(null);
+  const activeIdsRef = useRef(new Set());
 
   const beep = useCallback(() => {
     try {
       if (!audioRef.current) audioRef.current = new (window.AudioContext || window.webkitAudioContext)();
       const ctx = audioRef.current;
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.connect(gain); gain.connect(ctx.destination);
-      osc.type = "sine"; osc.frequency.value = 880;
-      gain.gain.value = 0.15;
-      osc.start(); osc.stop(ctx.currentTime + 0.25);
+      const play = () => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain); gain.connect(ctx.destination);
+        osc.type = "sine"; osc.frequency.value = 880;
+        gain.gain.value = 0.15;
+        osc.start(); osc.stop(ctx.currentTime + 0.25);
+      };
+      if (ctx.state === "suspended") ctx.resume().then(play).catch(() => {});
+      else play();
     } catch {}
+  }, []);
+
+  useEffect(() => {
+    const unlockAudio = () => {
+      try {
+        if (!audioRef.current) audioRef.current = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioRef.current.state === "suspended") audioRef.current.resume().catch(() => {});
+      } catch {}
+    };
+    window.addEventListener("pointerdown", unlockAudio, { once: true });
+    window.addEventListener("keydown", unlockAudio, { once: true });
+    return () => {
+      window.removeEventListener("pointerdown", unlockAudio);
+      window.removeEventListener("keydown", unlockAudio);
+    };
   }, []);
 
   const checkDue = useCallback(async () => {
     try {
       const r = await remindersApi.due();
       const due = r.data || [];
-      if (!due.length) return;
-      setAlarms(prev => {
-        const ids = new Set(prev.map(a => a.id));
-        const added = due.filter(d => !ids.has(d.id));
-        if (added.length) {
-          beep();
-          // advance on server to avoid repeats
-          added.forEach(d => remindersApi.complete(d.id).catch(() => {}));
-        }
-        return [...prev, ...added];
-      });
-      if ("Notification" in window && Notification.permission === "granted" && due.length) {
-        due.forEach(d => new Notification(d.name, { body: d.description || "Reminder due" }));
+      const added = due.filter(d => !activeIdsRef.current.has(d.id));
+      if (!added.length) return;
+      added.forEach(d => activeIdsRef.current.add(d.id));
+      setAlarms(prev => [...prev, ...added]);
+      beep();
+      if ("Notification" in window && Notification.permission === "granted") {
+        added.forEach(d => {
+          try { new Notification(d.name, { body: d.description || "Reminder due" }); } catch {}
+        });
       }
     } catch {}
   }, [beep]);
@@ -66,11 +81,25 @@ export default function AlarmProvider({ children }) {
     return () => clearInterval(t);
   }, [alarms.map(a => a.id).join(","), beep]);
 
-  const dismiss = (id) => setAlarms(a => a.filter(x => x.id !== id));
-  const dismissAll = () => setAlarms([]);
+  const dismissAll = async () => {
+    const completed = [];
+    await Promise.all(alarms.map(async alarm => {
+      try {
+        await remindersApi.complete(alarm.id);
+        completed.push(alarm.id);
+        activeIdsRef.current.delete(alarm.id);
+      } catch {}
+    }));
+    setAlarms(current => current.filter(alarm => !completed.includes(alarm.id)));
+  };
   const snooze = async (id, minutes = 10) => {
-    try { await remindersApi.snooze(id, minutes); } catch {}
-    setAlarms(a => a.filter(x => x.id !== id));
+    try {
+      await remindersApi.snooze(id, minutes);
+      activeIdsRef.current.delete(id);
+      setAlarms(a => a.filter(x => x.id !== id));
+    } catch (error) {
+      console.error("Could not snooze reminder", error);
+    }
   };
 
   return (

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { TrendingUp, TrendingDown, Wallet, Receipt, Plus, Download } from "lucide-react";
-import { money, displayDate as isoDate } from "../utils/format";
+import { money, displayDate as isoDate, formatKolkataDateTime } from "../utils/format";
 import { reportsApi, expensesApi, remindersApi } from "../services/api";
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Legend } from "recharts";
 
@@ -111,7 +111,7 @@ export default function Dashboard() {
           {reminders.length===0 ? <div className="empty">No active reminders.</div> : (
             <ul style={{listStyle:"none",padding:0}}>{reminders.map(r=>(
               <li key={r.id} style={{padding:"8px 0",borderBottom:"1px solid var(--border)"}}>
-                <strong>{r.name}</strong> - {new Date(r.nextOccurrence).toLocaleString()}
+                <strong>{r.name}</strong> - {formatKolkataDateTime(r.nextOccurrence)}
               </li>
             ))}</ul>
           )}

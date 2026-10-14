@@ -32,7 +32,7 @@ public class ReminderSchedulerService : BackgroundService
         {
             using var scope = _services.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-            var now = DateTime.Now;
+            var now = ReminderClock.Now;
             var due = await db.Reminders.Where(r => r.IsEnabled && r.NextOccurrence != DateTime.MaxValue && r.NextOccurrence <= now).ToListAsync(ct);
 
             foreach (var r in due)
@@ -52,15 +52,9 @@ public class ReminderSchedulerService : BackgroundService
                     TriggerOsNotification(r.Name, r.Description);
                 }
 
-                // advance recurring
-                if (r.Recurrence != RecurrenceType.Once)
-                {
-                    r.NextOccurrence = ReminderCalculator.ComputeNext(r, now.AddSeconds(1));
-                    if (r.EndDate.HasValue && r.NextOccurrence > r.EndDate.Value.Date.AddDays(1).AddTicks(-1))
-                    {
-                        r.NextOccurrence = DateTime.MaxValue;
-                    }
-                }
+                // Leave the occurrence due until the user completes or snoozes it.
+                // This lets the web app retrieve it even if its polling interval missed
+                // the scheduler's first tick.
                 r.UpdatedAt = DateTime.UtcNow;
             }
             await db.SaveChangesAsync(ct);

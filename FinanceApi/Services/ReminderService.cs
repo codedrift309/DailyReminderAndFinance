@@ -59,7 +59,7 @@ public class ReminderService : IReminderService
         r.EndDate = dto.EndDate?.Date;
         r.IsEnabled = dto.IsEnabled;
         r.UpdatedAt = DateTime.UtcNow;
-        r.NextOccurrence = r.IsEnabled ? ReminderCalculator.ComputeNext(r, DateTime.Now) : DateTime.MaxValue;
+        r.NextOccurrence = r.IsEnabled ? ReminderCalculator.ComputeNext(r, ReminderClock.Now) : DateTime.MaxValue;
         await _db.SaveChangesAsync();
         return Map(r);
     }
@@ -87,7 +87,7 @@ public class ReminderService : IReminderService
         }
         else
         {
-            r.NextOccurrence = ReminderCalculator.ComputeNext(r, DateTime.Now.AddSeconds(1));
+            r.NextOccurrence = ReminderCalculator.ComputeNext(r, ReminderClock.Now.AddSeconds(1));
         }
         r.LastNotificationAt = DateTime.UtcNow;
         r.UpdatedAt = DateTime.UtcNow;
@@ -99,7 +99,7 @@ public class ReminderService : IReminderService
     {
         var r = await _db.Reminders.FindAsync(id);
         if (r == null) return null;
-        r.NextOccurrence = DateTime.Now.AddMinutes(minutes);
+        r.NextOccurrence = ReminderClock.Now.AddMinutes(minutes);
         r.UpdatedAt = DateTime.UtcNow;
         await _db.SaveChangesAsync();
         return Map(r);
@@ -107,14 +107,14 @@ public class ReminderService : IReminderService
 
     public async Task<List<ReminderDto>> GetDueAsync()
     {
-        var now = DateTime.Now;
+        var now = ReminderClock.Now;
         var list = await _db.Reminders.Where(r => r.IsEnabled && r.NextOccurrence <= now && r.NextOccurrence != DateTime.MaxValue).ToListAsync();
         return list.Select(Map).ToList();
     }
 
     public async Task<List<ReminderDto>> GetOverdueAsync()
     {
-        var now = DateTime.Now;
+        var now = ReminderClock.Now;
         var list = await _db.Reminders.Where(r => r.IsEnabled && r.NextOccurrence < now.AddMinutes(-5) && r.NextOccurrence != DateTime.MaxValue).ToListAsync();
         return list.Select(Map).ToList();
     }

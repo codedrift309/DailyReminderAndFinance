@@ -1,0 +1,12 @@
+.git
+.vs
+**/bin
+**/obj
+**/node_modules
+**/node_modules_old
+**/dist
+**/*.db
+**/*.db-shm
+**/*.db-wal
+**/*.user
+**/*.log

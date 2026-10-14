@@ -67,6 +67,22 @@ Stop the app, copy `FinanceApi/finance.db` (and `-wal/-shm` if present) to a saf
 - Run backend: double-click `run-backend.cmd`
 - Run frontend: double-click `finance-ui/run-frontend.cmd`
 
+## Run with Docker
+From the repository root, build and start the frontend and API:
+```powershell
+docker compose up --build
+```
+Open the frontend at http://localhost:5173 and Swagger at http://localhost:5139/swagger. SQLite data is stored in the `finance-data` Docker volume and survives container recreation.
+
+To stop the services, press Ctrl+C and run `docker compose down`. The database volume is retained. To remove the database too, run `docker compose down --volumes`.
+
+If the default ports are already in use, set `FRONTEND_PORT` and/or `API_PORT` before starting Compose. For example, in PowerShell:
+```powershell
+$env:FRONTEND_PORT = "5175"
+docker compose up --build
+```
+The frontend API URL is baked in at build time and defaults to `http://localhost:$API_PORT`. Set `VITE_API_URL` to a browser-accessible API URL when deploying somewhere other than the local machine, then rebuild the frontend image.
+
 ## Solution
 - Open `PersonalFinance.sln` in Visual Studio (classic format). It contains:
   - `FinanceApi` (.NET backend)

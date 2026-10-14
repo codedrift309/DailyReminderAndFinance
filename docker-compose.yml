@@ -1,0 +1,28 @@
+services:
+  api:
+    build:
+      context: ./FinanceApi
+      dockerfile: Dockerfile
+    environment:
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__DefaultConnection: Data Source=/app/data/finance.db
+    ports:
+      - "${API_PORT:-5139}:8080"
+    volumes:
+      - finance-data:/app/data
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./finance-ui
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:${API_PORT:-5139}}
+    depends_on:
+      - api
+    ports:
+      - "${FRONTEND_PORT:-5173}:80"
+    restart: unless-stopped
+
+volumes:
+  finance-data:

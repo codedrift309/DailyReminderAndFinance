@@ -10,6 +10,10 @@
     <EnableDefaultItems>false</EnableDefaultItems>
   </PropertyGroup>
 
+  <ItemGroup>
+    <None Include="**\*" Exclude="node_modules\**;dist\**;dist-ssr\**;bin\**;obj\**;.pnpm\**;*.user" />
+  </ItemGroup>
+
   <Target Name="Build">
     <Exec Command="build-frontend.cmd" WorkingDirectory="$(ProjectDir)" Condition="Exists('$(ProjectDir)package.json')" />
   </Target>

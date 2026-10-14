@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { remindersApi } from "../services/api";
 import { Bell, Plus, Edit2, Trash2, Check, Clock } from "lucide-react";
-import { isoDate, today } from "../utils/format";
+import { isoDate, today, formatKolkataDateTime } from "../utils/format";
 
 const REC = [
   {v:0,l:"Once"},{v:1,l:"Daily"},{v:2,l:"Monthly"},{v:3,l:"Yearly"},{v:4,l:"Every X Days"},{v:5,l:"Every X Months"}
@@ -22,27 +22,6 @@ export default function Reminders() {
     catch(e){console.error(e);} finally { setLoading(false); }
   };
   useEffect(()=>{ load(); },[]);
-
-  // Browser notifications polling
-  useEffect(() => {
-    if ("Notification" in window && Notification.permission === "default") {
-      Notification.requestPermission().catch(()=>{});
-    }
-    const poll = async () => {
-      try {
-        const r = await remindersApi.due();
-        (r.data || []).forEach(async (rem) => {
-          if ("Notification" in window && Notification.permission === "granted") {
-            new Notification(rem.name, { body: rem.description || "Reminder due" });
-          }
-          await remindersApi.complete(rem.id).catch(()=>{});
-        });
-      } catch {}
-    };
-    poll();
-    const id = setInterval(poll, 30000);
-    return () => clearInterval(id);
-  }, []);
 
   const openNew = () => { setEditing(null); setForm(emptyForm); setShowModal(true); };
   const openEdit = (r) => {
@@ -100,7 +79,7 @@ export default function Reminders() {
               {items.map(r=>(
                 <tr key={r.id}>
                   <td>{r.name}</td>
-                  <td>{r.nextOccurrence && r.nextOccurrence !== "9999-12-31T00:00:00" ? new Date(r.nextOccurrence).toLocaleString() : "Completed/Disabled"}</td>
+                  <td>{formatKolkataDateTime(r.nextOccurrence)}</td>
                   <td>{REC.find(x=>x.v===r.recurrence)?.l}{r.recurrenceInterval?` (${r.recurrenceInterval})`:""}</td>
                   <td>{r.isEnabled ? "Enabled" : "Disabled"}</td>
                   <td className="actions">

@@ -1,5 +1,5 @@
 $root = Split-Path -Parent $MyInvocation.MyCommand.Path
-$bin = "C:\Users\paras.sonawane\AppData\Local\OpenAI\Codex\runtimes\cua_node\cfb32733c877621e\bin"
+$bin = "C:\Users\paras.sonawane\AppData\Local\OpenAI\Codex\runtimes\cua_node\a9ba6825a525118c\bin"
 $env:PATH = "$bin;$env:PATH"
 $env:NODE_TLS_REJECT_UNAUTHORIZED = "0"
 

@@ -103,7 +103,7 @@ export default function AlarmProvider({ children }) {
   };
 
   return (
-    <AlarmContext.Provider value={{ alarms, dismiss, snooze }}>
+    <AlarmContext.Provider value={{ alarms, dismiss: dismissAll, snooze }}>
       {children}
       {alarms.length > 0 && (
         <div className="alarm-overlay" role="alertdialog" aria-live="assertive">

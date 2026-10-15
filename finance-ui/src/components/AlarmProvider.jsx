@@ -7,6 +7,7 @@ export const AlarmContext = createContext(null);
 export default function AlarmProvider({ children }) {
   const [alarms, setAlarms] = useState([]);
   const [countdown, setCountdown] = useState(60);
+  const [snoozeChoices, setSnoozeChoices] = useState({});
   const audioRef = useRef(null);
   const activeIdsRef = useRef(new Set());
 
@@ -92,9 +93,9 @@ export default function AlarmProvider({ children }) {
     }));
     setAlarms(current => current.filter(alarm => !completed.includes(alarm.id)));
   };
-  const snooze = async (id, minutes = 10) => {
+  const snooze = async (id, option = "10m") => {
     try {
-      await remindersApi.snooze(id, minutes);
+      await remindersApi.snooze(id, option);
       activeIdsRef.current.delete(id);
       setAlarms(a => a.filter(x => x.id !== id));
     } catch (error) {
@@ -114,7 +115,19 @@ export default function AlarmProvider({ children }) {
           <div style={{display:"flex",gap:12,flexWrap:"wrap",justifyContent:"center"}}>
             {alarms.map(a => (
               <React.Fragment key={a.id}>
-                <button className="secondary" onClick={() => snooze(a.id, 10)}><Clock size={16}/> Snooze 10m</button>
+                <label style={{display:"flex",alignItems:"center",gap:8}}>
+                  Snooze
+                  <select value={snoozeChoices[a.id] || "10m"} onChange={e=>setSnoozeChoices(current=>({...current,[a.id]:e.target.value}))}>
+                    <option value="2m">2 minutes</option>
+                    <option value="10m">10 minutes</option>
+                    <option value="tomorrow">Tomorrow, same time</option>
+                    <option value="1month">Next month, same time</option>
+                    <option value="3months">3 months, same time</option>
+                    <option value="4months">4 months, same time</option>
+                    <option value="1year">1 year, same time</option>
+                  </select>
+                  <button className="secondary" onClick={() => snooze(a.id, snoozeChoices[a.id] || "10m")}><Clock size={16}/> Submit</button>
+                </label>
               </React.Fragment>
             ))}
             <button onClick={dismissAll}><Check size={16}/> Dismiss</button>

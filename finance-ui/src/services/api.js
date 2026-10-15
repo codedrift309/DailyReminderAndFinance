@@ -1,14 +1,13 @@
-import axios from "axios";
+import { localRequest } from "./localData";
 
-const host = (typeof window !== "undefined" && window.location && window.location.hostname) ? window.location.hostname : "localhost";
-let override = null;
-if (typeof window !== "undefined") {
-  const params = new URLSearchParams(window.location.search);
-  if (params.get("api")) { override = params.get("api"); localStorage.setItem("finance_api_base", override); }
-  else override = localStorage.getItem("finance_api_base");
-}
-const baseURL = import.meta.env.VITE_API_URL || override || `http://${host}:5139`;
-export const api = axios.create({ baseURL, timeout: 15000 });
+// All finance records are stored in this browser profile's local storage. No API
+// request sends these records to Render or another device.
+export const api = {
+  get: async (url, options = {}) => ({ data: localRequest("GET", url, null, options.params || {}) }),
+  post: async (url, data) => ({ data: localRequest("POST", url, data) }),
+  put: async (url, data) => ({ data: localRequest("PUT", url, data) }),
+  delete: async (url) => ({ data: localRequest("DELETE", url) }),
+};
 
 export const expensesApi = {
   list: (params) => api.get("/api/expenses", { params }),
@@ -44,7 +43,7 @@ export const remindersApi = {
   update: (id, data) => api.put(`/api/reminders/${id}`, data),
   remove: (id) => api.delete(`/api/reminders/${id}`),
   complete: (id) => api.post(`/api/reminders/${id}/complete`),
-  snooze: (id, minutes) => api.post(`/api/reminders/${id}/snooze`, { minutes }),
+  snooze: (id, option) => api.post(`/api/reminders/${id}/snooze`, typeof option === "number" ? { minutes: option } : { option }),
   due: () => api.get("/api/reminders/due"),
 };
 
@@ -55,4 +54,5 @@ export const reportsApi = {
   expenses: (params) => api.get("/api/reports/expenses", { params }),
   income: (params) => api.get("/api/reports/income", { params }),
   incomeVsExpense: (params) => api.get("/api/reports/income-vs-expense", { params }),
+  export: (type, params) => api.get("/api/reports/export", { params: { ...params, type } }),
 };

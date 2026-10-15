@@ -37,14 +37,9 @@ export default function Reports() {
   useEffect(()=>{ load(); },[]);
 
   const download = async (type) => {
-    const base = import.meta.env.VITE_API_URL || "http://localhost:5139";
-    const q = new URLSearchParams();
-    q.set("type", type);
-    if (from) q.set("from", from);
-    if (to) q.set("to", to);
     try {
-      const res = await fetch(`${base}/api/reports/export?${q.toString()}`);
-      const blob = await res.blob();
+      const res = await reportsApi.export(type, { from: from || undefined, to: to || undefined });
+      const blob = new Blob([res.data], { type: "text/csv;charset=utf-8" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url; a.download = `${type}_export.csv`;

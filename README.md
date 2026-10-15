@@ -83,6 +83,9 @@ docker compose up --build
 ```
 The frontend API URL is baked in at build time and defaults to `http://localhost:$API_PORT`. Set `VITE_API_URL` to a browser-accessible API URL when deploying somewhere other than the local machine, then rebuild the frontend image.
 
+## Device-local data
+The frontend stores finance records in browser storage on the device and browser profile where the app is installed. It does not send those records to the API or sync them between a phone and laptop. Each device starts with its own empty data set and default categories. Use Settings to download a JSON backup before clearing browser data or uninstalling the app. Reminder alarms require the app to be open; mobile browsers may pause alarms in the background.
+
 ## Solution
 - Open `PersonalFinance.sln` in Visual Studio (classic format). It contains:
   - `FinanceApi` (.NET backend)

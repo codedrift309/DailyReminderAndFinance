@@ -46,13 +46,25 @@ dotnet ef database update
 - Expense and income CRUD, search, filtering, pagination, sorting
 - Custom expense categories with rename/deactivate and duplicate prevention
 - Reminders (once, daily, monthly, yearly, every N days/months) with snooze/complete
-- Windows toast notifications via backend hosted scheduler (works with browser closed while backend runs)
-- Browser notifications while app is open
+- Web Push reminder notifications when the installed app is minimized or closed (requires server configuration and an active backend)
+- On-screen alarm overlay while the app is open
 - Reports: summary, categories, monthly comparison, trend, income vs expense
 - CSV export and printable reports (browser print)
 
-## Reminder limitations
-Browser notifications require the frontend tab and permission. OS toasts require the backend process running; to keep it always on, configure Windows Task Scheduler to start `dotnet run` (or a published executable) at login.
+## Background reminder notifications
+The finance records and full reminders remain in each device's browser storage. To deliver reminders while the app is closed, the API stores each device's Web Push subscription and the minimum schedule fields needed to send the alert (reminder name, due time, and recurrence). It does not store the reminder description. Each installed device has its own subscription and reminder schedule.
+
+Generate one VAPID key pair and keep it stable. For example, run `npx web-push generate-vapid-keys` in a terminal. Set these environment variables on the API host (Render: API service > Environment):
+
+```text
+WebPush__PublicKey=<VAPID public key>
+WebPush__PrivateKey=<VAPID private key>
+WebPush__Subject=mailto:you@example.com
+```
+
+Set `VITE_API_URL` to the public API URL on the frontend build service, rebuild/redeploy the frontend, then open the installed app on each device and select **Settings > Enable background alerts**. Allow notifications when prompted. Keep the API service running so its scheduler can send reminders. Delivery also depends on internet connectivity, browser support, notification permission, and the device's power settings. A push notification can appear while the app is closed; tapping it opens the app. Browsers do not allow a website to force itself to the foreground over other apps.
+
+On Render's Free web-service plan, an idle service spins down after 15 minutes without inbound traffic, so its in-process reminder scheduler cannot reliably send alerts while asleep. Use a plan/service that stays running for reliable background delivery.
 
 ## Backup / restore
 Stop the app, copy `FinanceApi/finance.db` (and `-wal/-shm` if present) to a safe location. Restore by replacing the file while the app is stopped.
@@ -84,7 +96,7 @@ docker compose up --build
 The frontend API URL is baked in at build time and defaults to `http://localhost:$API_PORT`. Set `VITE_API_URL` to a browser-accessible API URL when deploying somewhere other than the local machine, then rebuild the frontend image.
 
 ## Device-local data
-The frontend stores finance records in browser storage on the device and browser profile where the app is installed. It does not send those records to the API or sync them between a phone and laptop. Each device starts with its own empty data set and default categories. Use Settings to download a JSON backup before clearing browser data or uninstalling the app. Reminder alarms require the app to be open; mobile browsers may pause alarms in the background.
+The frontend stores finance records in browser storage on the device and browser profile where the app is installed. It does not send those records to the API or sync them between a phone and laptop. Each device starts with its own empty data set and default categories. Use Settings to download a JSON backup before clearing browser data or uninstalling the app. For background push, the API receives reminder schedules and device subscription details only; it does not receive expense or income records.
 
 ## Solution
 - Open `PersonalFinance.sln` in Visual Studio (classic format). It contains:

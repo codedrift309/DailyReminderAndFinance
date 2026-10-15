@@ -124,3 +124,46 @@ public class ReminderNotification
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }
+
+// Push metadata and reminder schedules are separated from finance records. A device
+// ID is generated locally by the browser and is not an account or cross-device ID.
+public class PushDevice
+{
+    [Key, MaxLength(64)]
+    public string DeviceId { get; set; } = string.Empty;
+
+    [Required, MaxLength(2048)]
+    public string Endpoint { get; set; } = string.Empty;
+
+    [Required, MaxLength(256)]
+    public string P256dh { get; set; } = string.Empty;
+
+    [Required, MaxLength(256)]
+    public string Auth { get; set; } = string.Empty;
+
+    public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+    public ICollection<PushReminder> Reminders { get; set; } = new List<PushReminder>();
+}
+
+public class PushReminder
+{
+    [MaxLength(64)]
+    public string DeviceId { get; set; } = string.Empty;
+
+    public int LocalReminderId { get; set; }
+
+    [Required, MaxLength(200)]
+    public string Name { get; set; } = string.Empty;
+
+    // Wall-clock time in Asia/Kolkata, matching the reminder UI.
+    public DateTime StartDate { get; set; }
+    public DateTime NextOccurrence { get; set; }
+    public int Recurrence { get; set; }
+    public int RecurrenceInterval { get; set; } = 1;
+    public DateTime? EndDate { get; set; }
+    public TimeSpan ReminderTime { get; set; }
+    public bool IsEnabled { get; set; } = true;
+    public DateTime? LastSentForOccurrence { get; set; }
+    public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+    public PushDevice? Device { get; set; }
+}

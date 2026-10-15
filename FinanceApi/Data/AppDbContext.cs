@@ -12,6 +12,8 @@ public class AppDbContext : DbContext
     public DbSet<Income> Incomes => Set<Income>();
     public DbSet<Reminder> Reminders => Set<Reminder>();
     public DbSet<ReminderNotification> ReminderNotifications => Set<ReminderNotification>();
+    public DbSet<PushDevice> PushDevices => Set<PushDevice>();
+    public DbSet<PushReminder> PushReminders => Set<PushReminder>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -48,6 +50,23 @@ public class AppDbContext : DbContext
         {
             e.HasOne(x => x.Reminder).WithMany(r => r.Notifications).HasForeignKey(x => x.ReminderId).OnDelete(DeleteBehavior.Cascade);
             e.HasIndex(x => new { x.ReminderId, x.ScheduledAt }).IsUnique();
+        });
+
+        modelBuilder.Entity<PushDevice>(e =>
+        {
+            e.HasKey(x => x.DeviceId);
+            e.Property(x => x.DeviceId).HasMaxLength(64);
+            e.Property(x => x.Endpoint).IsRequired().HasMaxLength(2048);
+            e.Property(x => x.P256dh).IsRequired().HasMaxLength(256);
+            e.Property(x => x.Auth).IsRequired().HasMaxLength(256);
+        });
+
+        modelBuilder.Entity<PushReminder>(e =>
+        {
+            e.HasKey(x => new { x.DeviceId, x.LocalReminderId });
+            e.Property(x => x.Name).IsRequired().HasMaxLength(200);
+            e.HasOne(x => x.Device).WithMany(d => d.Reminders).HasForeignKey(x => x.DeviceId).OnDelete(DeleteBehavior.Cascade);
+            e.HasIndex(x => new { x.IsEnabled, x.NextOccurrence });
         });
     }
 }

@@ -1,4 +1,5 @@
 import { localRequest } from "./localData";
+import { removePushReminder, syncPushReminder } from "./pushClient";
 
 // All finance records are stored in this browser profile's local storage. No API
 // request sends these records to Render or another device.
@@ -39,11 +40,31 @@ export const incomesApi = {
 export const remindersApi = {
   list: (includeDisabled) => api.get("/api/reminders", { params: { includeDisabled } }),
   get: (id) => api.get(`/api/reminders/${id}`),
-  create: (data) => api.post("/api/reminders", data),
-  update: (id, data) => api.put(`/api/reminders/${id}`, data),
-  remove: (id) => api.delete(`/api/reminders/${id}`),
-  complete: (id) => api.post(`/api/reminders/${id}/complete`),
-  snooze: (id, option) => api.post(`/api/reminders/${id}/snooze`, typeof option === "number" ? { minutes: option } : { option }),
+  create: async (data) => {
+    const result = await api.post("/api/reminders", data);
+    await syncPushReminder(result.data).catch(error => console.warn("Push reminder sync failed", error));
+    return result;
+  },
+  update: async (id, data) => {
+    const result = await api.put(`/api/reminders/${id}`, data);
+    await syncPushReminder(result.data).catch(error => console.warn("Push reminder sync failed", error));
+    return result;
+  },
+  remove: async (id) => {
+    const result = await api.delete(`/api/reminders/${id}`);
+    await removePushReminder(id).catch(error => console.warn("Push reminder removal failed", error));
+    return result;
+  },
+  complete: async (id) => {
+    const result = await api.post(`/api/reminders/${id}/complete`);
+    await syncPushReminder(result.data).catch(error => console.warn("Push reminder sync failed", error));
+    return result;
+  },
+  snooze: async (id, option) => {
+    const result = await api.post(`/api/reminders/${id}/snooze`, typeof option === "number" ? { minutes: option } : { option });
+    await syncPushReminder(result.data).catch(error => console.warn("Push reminder sync failed", error));
+    return result;
+  },
   due: () => api.get("/api/reminders/due"),
 };
 

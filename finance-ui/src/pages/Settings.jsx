@@ -1,11 +1,31 @@
 import React from "react";
 import { exportLocalBackup } from "../services/localData";
+import { remindersApi } from "../services/api";
+import { disablePush, enablePush, isPushEnabled } from "../services/pushClient";
 
 export default function Settings() {
-  const enableNotifications = async () => {
-    if (!("Notification" in window)) { alert("Notifications not supported"); return; }
-    const p = await Notification.requestPermission();
-    alert("Permission: " + p);
+  const [pushEnabled, setPushEnabled] = React.useState(isPushEnabled);
+  const [pushBusy, setPushBusy] = React.useState(false);
+  const [pushMessage, setPushMessage] = React.useState("");
+  const togglePush = async () => {
+    setPushBusy(true);
+    setPushMessage("");
+    try {
+      if (pushEnabled) {
+        await disablePush();
+        setPushEnabled(false);
+        setPushMessage("Background reminder notifications are disabled on this device.");
+      } else {
+        const result = await remindersApi.list(true);
+        await enablePush(result.data || []);
+        setPushEnabled(true);
+        setPushMessage("Background alerts are enabled for this device.");
+      }
+    } catch (error) {
+      setPushMessage(error.message || "Could not configure background notifications.");
+    } finally {
+      setPushBusy(false);
+    }
   };
   const downloadBackup = () => {
     const blob = new Blob([exportLocalBackup()], { type: "application/json" });
@@ -21,10 +41,11 @@ export default function Settings() {
       <h2>Settings</h2>
       <div className="card" style={{maxWidth:600}}>
         <h3>Notifications</h3>
-        <p>Enable browser notifications for reminders.</p>
-        <button onClick={enableNotifications}>Enable Notifications</button>
+        <p>Receive reminder alerts when this app is minimized or closed. Install the app on each device and enable notifications separately on that device.</p>
+        <button onClick={togglePush} disabled={pushBusy}>{pushBusy ? "Please wait…" : pushEnabled ? "Disable background alerts" : "Enable background alerts"}</button>
+        {pushMessage && <p role="status" style={{marginTop:8}}>{pushMessage}</p>}
         <p style={{color:"var(--muted)",fontSize:".9rem",marginTop:8}}>
-          Reminder alarms run while this app is open. Your browser may pause alarms if the app is in the background or the device is asleep.
+          While the app is open, its alarm screen is used. When it is closed, your device shows a notification; tap it to open the reminder. Delivery needs internet access and can be delayed by browser or device power settings.
         </p>
       </div>
       <div className="card" style={{maxWidth:600,marginTop:12}}>

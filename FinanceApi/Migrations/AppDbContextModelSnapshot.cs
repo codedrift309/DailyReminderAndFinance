@@ -59,7 +59,7 @@ namespace FinanceApi.Migrations
 
                     b.HasIndex("PaymentDate");
 
-                    b.ToTable("Expenses");
+                    b.ToTable("Expenses", (string)null);
                 });
 
             modelBuilder.Entity("FinanceApi.Models.ExpenseCategory", b =>
@@ -90,7 +90,7 @@ namespace FinanceApi.Migrations
                     b.HasIndex("Name")
                         .IsUnique();
 
-                    b.ToTable("ExpenseCategories");
+                    b.ToTable("ExpenseCategories", (string)null);
                 });
 
             modelBuilder.Entity("FinanceApi.Models.Income", b =>
@@ -131,7 +131,84 @@ namespace FinanceApi.Migrations
 
                     b.HasIndex("ReceivedDate");
 
-                    b.ToTable("Incomes");
+                    b.ToTable("Incomes", (string)null);
+                });
+
+            modelBuilder.Entity("FinanceApi.Models.PushDevice", b =>
+                {
+                    b.Property<string>("DeviceId")
+                        .HasMaxLength(64)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Auth")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Endpoint")
+                        .IsRequired()
+                        .HasMaxLength(2048)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("P256dh")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("DeviceId");
+
+                    b.ToTable("PushDevices", (string)null);
+                });
+
+            modelBuilder.Entity("FinanceApi.Models.PushReminder", b =>
+                {
+                    b.Property<string>("DeviceId")
+                        .HasMaxLength(64)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("LocalReminderId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime?>("EndDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsEnabled")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime?>("LastSentForOccurrence")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("NextOccurrence")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Recurrence")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("RecurrenceInterval")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<TimeSpan>("ReminderTime")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("StartDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("DeviceId", "LocalReminderId");
+
+                    b.HasIndex("IsEnabled", "NextOccurrence");
+
+                    b.ToTable("PushReminders", (string)null);
                 });
 
             modelBuilder.Entity("FinanceApi.Models.Reminder", b =>
@@ -185,7 +262,7 @@ namespace FinanceApi.Migrations
 
                     b.HasIndex("NextOccurrence");
 
-                    b.ToTable("Reminders");
+                    b.ToTable("Reminders", (string)null);
                 });
 
             modelBuilder.Entity("FinanceApi.Models.ReminderNotification", b =>
@@ -216,7 +293,7 @@ namespace FinanceApi.Migrations
                     b.HasIndex("ReminderId", "ScheduledAt")
                         .IsUnique();
 
-                    b.ToTable("ReminderNotifications");
+                    b.ToTable("ReminderNotifications", (string)null);
                 });
 
             modelBuilder.Entity("FinanceApi.Models.Expense", b =>
@@ -228,6 +305,17 @@ namespace FinanceApi.Migrations
                         .IsRequired();
 
                     b.Navigation("Category");
+                });
+
+            modelBuilder.Entity("FinanceApi.Models.PushReminder", b =>
+                {
+                    b.HasOne("FinanceApi.Models.PushDevice", "Device")
+                        .WithMany("Reminders")
+                        .HasForeignKey("DeviceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Device");
                 });
 
             modelBuilder.Entity("FinanceApi.Models.ReminderNotification", b =>
@@ -244,6 +332,11 @@ namespace FinanceApi.Migrations
             modelBuilder.Entity("FinanceApi.Models.ExpenseCategory", b =>
                 {
                     b.Navigation("Expenses");
+                });
+
+            modelBuilder.Entity("FinanceApi.Models.PushDevice", b =>
+                {
+                    b.Navigation("Reminders");
                 });
 
             modelBuilder.Entity("FinanceApi.Models.Reminder", b =>

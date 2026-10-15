@@ -21,6 +21,26 @@ self.addEventListener("push", event => {
       body: data.body || "A reminder is due",
       icon: "/icon.svg",
       badge: "/icon.svg",
+      tag: data.tag || "personal-finance-reminder",
+      renotify: true,
+      requireInteraction: true,
+      vibrate: [350, 150, 350, 150, 700],
+      data: { url: data.url || "/reminders" },
     })
   );
+});
+
+self.addEventListener("notificationclick", event => {
+  event.notification.close();
+  const target = new URL(event.notification.data?.url || "/reminders", self.location.origin).href;
+  event.waitUntil((async () => {
+    const windows = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+    for (const client of windows) {
+      if (new URL(client.url).origin === self.location.origin) {
+        await client.navigate(target);
+        return client.focus();
+      }
+    }
+    return self.clients.openWindow(target);
+  })());
 });

@@ -6,7 +6,7 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
 RUN pnpm install --frozen-lockfile
 
 COPY . ./
-ARG VITE_API_URL=http://localhost:5139
+ARG VITE_API_URL=https://dailyreminderandfinancebackend.onrender.com
 ENV VITE_API_URL=${VITE_API_URL}
 RUN pnpm build
 

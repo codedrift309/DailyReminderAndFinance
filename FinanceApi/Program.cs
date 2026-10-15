@@ -19,6 +19,7 @@ builder.Services.AddScoped<IReminderService, ReminderService>();
 builder.Services.AddScoped<IReportService, ReportService>();
 
 builder.Services.AddHostedService<ReminderSchedulerService>();
+builder.Services.AddHostedService<WebPushReminderService>();
 
 var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? new[] { "http://localhost:5173" };
 builder.Services.AddCors(options =>
